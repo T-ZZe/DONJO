@@ -1,0 +1,75 @@
+name: Build Donjon
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Generer pom.xml et plugin.yml
+        run: |
+          SRC=$(find . -name DonjonPlugin.java -not -path "./jarbuild/*" | head -n 1)
+          echo "Source trouvee : $SRC"
+          mkdir -p jarbuild/src/main/java/fr/donjon jarbuild/src/main/resources
+          cp "$SRC" jarbuild/src/main/java/fr/donjon/DonjonPlugin.java
+
+          cat > jarbuild/src/main/resources/plugin.yml <<'EOF'
+          name: Donjon
+          version: 1.0.0
+          main: fr.donjon.DonjonPlugin
+          api-version: '26.1'
+          commands:
+            donjon:
+              description: Entrer dans le donjon
+              usage: /donjon [quit]
+          permissions:
+            donjon.admin:
+              default: op
+          EOF
+
+          cat > jarbuild/pom.xml <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+            <groupId>fr.donjon</groupId>
+            <artifactId>Donjon</artifactId>
+            <version>1.0.0</version>
+            <properties>
+              <maven.compiler.release>25</maven.compiler.release>
+              <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+            </properties>
+            <repositories>
+              <repository>
+                <id>papermc</id>
+                <url>https://repo.papermc.io/repository/maven-public/</url>
+              </repository>
+            </repositories>
+            <dependencies>
+              <dependency>
+                <groupId>io.papermc.paper</groupId>
+                <artifactId>paper-api</artifactId>
+                <version>[26.1.2.build,)</version>
+                <scope>provided</scope>
+              </dependency>
+            </dependencies>
+            <build>
+              <finalName>Donjon</finalName>
+            </build>
+          </project>
+          EOF
+
+      - name: Compiler
+        run: mvn -B -f jarbuild/pom.xml package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Donjon-jar
+          path: jarbuild/target/Donjon.jar
