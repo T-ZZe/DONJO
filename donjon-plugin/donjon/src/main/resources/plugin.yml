@@ -1,0 +1,12 @@
+name: Donjon
+version: 1.0.0
+main: fr.donjon.DonjonPlugin
+api-version: '26.1'
+description: Donjon du château + boss La Faucheuse
+commands:
+  donjon:
+    description: Entrer dans le donjon (/donjon quit pour sortir)
+    usage: /donjon [quit|give <fragment|cle|fragmentenfer|cleenfer|plastron>]
+permissions:
+  donjon.admin:
+    default: op
